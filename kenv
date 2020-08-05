@@ -1,0 +1,39 @@
+!/bin/bash
+# This script switches kube config files in home dir
+
+ENV=${1:-test}
+CONTEXT=${2:-local}
+NAMESPACE=${3:-default}
+
+switchEnv() {
+  echo -e "$1---> Changing env to $ENV\e[0m"
+  cp -a ~/.kube/config-$ENV ~/.kube/config
+
+  echo -e "$1---> Switching default context\e[0m"
+  kubectl config use-context $CONTEXT | sed 's/^/     /'
+
+  echo -e "$1---> Switching default namespace\e[0m"
+  kubectl config set-context --current --namespace=$NAMESPACE | sed 's/^/     /'
+  echo "     Active namespace is $NAMESPACE"
+
+  echo -e "$1---> Cluster nodes\e[0m"
+  kubectl get nodes --label-columns=topology.kubernetes.io/zone | sed 's/^/     /'
+}
+
+case $ENV in
+  test)
+  switchEnv '\e[32m'
+  ;;
+
+  syst)
+  switchEnv '\e[33m'
+  ;;
+
+  prod)
+  switchEnv '\e[31m'
+  ;;
+
+  *)
+  echo "     Not a valid kubernetes environment"
+  ;;
+esac
